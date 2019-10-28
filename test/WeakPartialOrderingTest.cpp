@@ -669,6 +669,13 @@ TEST(WeakPartialOrderingTest, exampleFromWpoPaper) {
   }
 }
 
+/*
+ * This example illustrates the effect of setting the 'lifted' in the WPO
+ * construction. While the resulting structures are both valid WPOs, only the
+ * WPO with 'lifted' set during its construction has the same WTO as
+ * Bourdoncle's when linearized. However, 'lifted' adds unnecessary orders
+ * between WPO nodes, so it must be simply used when creating a WTO from a WPO.
+ */
 TEST(WeakPartialOrderingTest, exampleFromWpoPaperIrreducible) {
   {
     SimpleGraph2 g;
