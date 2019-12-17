@@ -293,10 +293,12 @@ class WpoBuilder final {
   void build(const NodeId& root) {
     construct_auxilary(root);
     construct_wpo();
+    // Compute num_outer_preds.
     for (auto& p : m_for_outer_preds) {
       auto& v = p.first;
       auto& x_max = p.second;
       auto h = m_wpo_space[v].is_head() ? v : m_parent[v];
+      // index of exit == index of head - 1.
       auto x = h - 1;
       while (x != x_max) {
         m_wpo_space[x].inc_num_outer_preds(v);
@@ -644,10 +646,11 @@ class WpoBuilder final {
   // A map from DFN to cross/forward edges (DFN is the lowest common ancestor).
   std::unordered_map<uint32_t, std::vector<std::pair<uint32_t, uint32_t>>>
       m_cross_fwds;
-  // Increase _num_outer_preds[x][pair.first] for Cx that satisfies
-  // pair.first \in Cx \subseteq C_{pair.second}.
+  // Increase m_num_outer_preds[x][pair.first] for component C_x that satisfies
+  // pair.first \in C_x \subseteq C_{pair.second}.
   std::vector<std::pair<WpoIdx, WpoIdx>> m_for_outer_preds;
-  // A map from node (DFN) to its parent.
+  // A map from node to the head of minimal component that contains it as
+  // non-header.
   std::unordered_map<WpoIdx, WpoIdx> m_parent;
   // Next DFN to assign.
   uint32_t m_next_dfn;
