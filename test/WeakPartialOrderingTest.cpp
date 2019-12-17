@@ -1284,7 +1284,8 @@ TEST(WeakPartialOrderingTest, handlingOuterPreds) {
             << wpo.get_node(v);
         wto << ')';
       } else {
-        if (!first) { wto << ' ';
+        if (!first) {
+          wto << ' ';
         }
         wto << wpo.get_node(v);
       }
