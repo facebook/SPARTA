@@ -477,7 +477,7 @@ class WpoBuilder final {
       add_node(x_h, get_ref(h), Type::Exit, size_h, false);
       bool widen = true;
       for (auto v : nested_SCCs_h) {
-        if (node_of(v).is_widening_point()) {
+        if (node_of(v).is_head()) {
           // Only the heads of the innermost components should be the widening
           // points.
           widen = false;
