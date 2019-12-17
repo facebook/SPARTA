@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 #include "WeakPartialOrdering.h"
 
 #include <gtest/gtest.h>
 #include <set>
-#include <sstream>
-#include <iostream>
 #include <sstream>
 #include <stack>
 #include <string>
@@ -103,7 +108,7 @@ TEST(WeakPartialOrderingTest, exampleFromWtoPaper) {
 
   EXPECT_EQ(10, wpo.size());
 
-  // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+  // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
   // Notice that forward edges are not considered.
   Answer lst[] = {
       {"1", true, false, false, 1, 0, 0, false},
@@ -194,7 +199,7 @@ TEST(WeakPartialOrderingTest, SingletonSccAtEnd) {
 
     EXPECT_EQ(3, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 1, 0, 0, false},
         {"2", false, true, false, 1, 1, 0, true},
@@ -275,7 +280,7 @@ TEST(WeakPartialOrderingTest, SingletonSccAtEnd) {
 
     EXPECT_EQ(5, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", false, true, false, 1, 0, 0, false},
         {"2", false, true, false, 1, 1, 0, true},
@@ -362,7 +367,7 @@ TEST(WeakPartialOrderingTest, SccAtEnd) {
 
     EXPECT_EQ(4, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 1, 0, 0, false},
         {"2", false, true, false, 1, 1, 0, true},
@@ -446,7 +451,7 @@ TEST(WeakPartialOrderingTest, SccAtEnd) {
 
     EXPECT_EQ(6, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", false, true, false, 1, 0, 0, false},
         {"2", false, true, false, 1, 1, 0, true},
@@ -520,7 +525,7 @@ TEST(WeakPartialOrderingTest, SingleNode) {
 
     EXPECT_EQ(1, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 0, 0, 0, false},
     };
@@ -601,7 +606,7 @@ TEST(WeakPartialOrderingTest, exampleFromWpoPaper) {
 
     EXPECT_EQ(13, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 1, 0, 0, false},
         {"2", false, true, false, 2, 1, 0, false},
@@ -702,7 +707,7 @@ TEST(WeakPartialOrderingTest, exampleFromWpoPaperIrreducible) {
 
     EXPECT_EQ(8, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 2, 0, 0, false},
         {"2", false, true, false, 2, 1, 0, false},
@@ -789,7 +794,7 @@ TEST(WeakPartialOrderingTest, exampleFromWpoPaperIrreducible) {
 
     EXPECT_EQ(8, wpo.size());
 
-    // node, plain, head, exit, num_succs, num_preds, num_outer_preds
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
     Answer lst[] = {
         {"1", true, false, false, 2, 0, 0, false},
         {"6", true, false, false, 1, 1, 0, false},
