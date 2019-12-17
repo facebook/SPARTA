@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <set>
 #include <sstream>
+#include <iostream>
 #include <sstream>
 #include <stack>
 #include <string>
@@ -849,5 +850,443 @@ TEST(WeakPartialOrderingTest, exampleFromWpoPaperIrreducible) {
       }
     }
     EXPECT_EQ(wto.str(), "1 6 (2 5 (3 4))");
+  }
+}
+
+TEST(WeakPartialOrderingTest, handlingOuterPreds) {
+  {
+    SimpleGraph2 g;
+    g.add_edge("1", "12");
+    g.add_edge("1", "16");
+    g.add_edge("1", "18");
+    g.add_edge("1", "26");
+    g.add_edge("12", "45");
+    g.add_edge("12", "75");
+    g.add_edge("12", "46");
+    g.add_edge("16", "74");
+    g.add_edge("16", "75");
+    g.add_edge("18", "92");
+    g.add_edge("26", "93");
+    g.add_edge("45", "46");
+    g.add_edge("46", "47");
+    g.add_edge("47", "73");
+    g.add_edge("73", "74");
+    g.add_edge("73", "75");
+    g.add_edge("73", "73");
+    g.add_edge("74", "46");
+    g.add_edge("75", "45");
+    g.add_edge("92", "93");
+    g.add_edge("93", "45");
+    g.add_edge("93", "46");
+
+    WeakPartialOrdering<std::string> wpo(
+        "1", [&g](const std::string& n) { return g.successors(n); }, false);
+
+    EXPECT_EQ(16, wpo.size());
+
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
+    Answer lst[] = {
+        {"1", true, false, false, 4, 0, 0, false},
+        {"12", true, false, false, 1, 1, 0, false},
+        {"16", true, false, false, 2, 1, 0, false},
+        {"18", true, false, false, 1, 1, 0, false},
+        {"92", true, false, false, 1, 1, 0, false},
+        {"26", true, false, false, 1, 1, 0, false},
+        {"93", true, false, false, 2, 2, 0, false},
+        {"45", false, true, false, 1, 2, 0, false},
+        {"46", false, true, false, 1, 2, 0, false},
+        {"47", true, false, false, 1, 1, 0, false},
+        {"73", false, true, false, 1, 1, 0, true},
+        {"73", false, false, true, 1, 1, 1, false},
+        {"74", true, false, false, 1, 2, 0, false},
+        {"46", false, false, true, 1, 1, 2, false},
+        {"75", true, false, false, 1, 2, 0, false},
+        {"45", false, false, true, 0, 1, 4, false},
+    };
+
+    std::unordered_map<WpoIdx, uint32_t> count(wpo.size());
+    std::stack<WpoIdx> wl;
+    wl.push(wpo.get_entry());
+    int i = 0;
+    std::ostringstream wto;
+    bool first = true;
+    while (!wl.empty()) {
+      auto v = wl.top();
+      wl.pop();
+      for (auto w : wpo.get_successors(v)) {
+        count[w]++;
+        if (count[w] == wpo.get_num_preds(w)) {
+          wl.push(w);
+        }
+      }
+
+      auto& answer = lst[i++];
+      EXPECT_EQ(answer.node, wpo.get_node(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.plain, wpo.is_plain(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.head, wpo.is_head(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.exit, wpo.is_exit(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.num_succs, wpo.get_successors(v).size())
+          << wpo.get_node(v);
+      EXPECT_EQ(answer.num_preds, wpo.get_num_preds(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.widen, wpo.is_widening_point(v)) << wpo.get_node(v);
+      if (wpo.is_head(v)) {
+        EXPECT_EQ(wpo.get_node(wpo.get_exit_of_head(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        if (!first) {
+          wto << ' ';
+        }
+        wto << '(' << wpo.get_node(v);
+      } else if (wpo.is_exit(v)) {
+        EXPECT_EQ(answer.num_outer_preds, wpo.get_num_outer_preds(v).size())
+            << wpo.get_node(v);
+        EXPECT_EQ(wpo.get_node(wpo.get_head_of_exit(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        wto << ')';
+      } else {
+        if (!first) {
+          wto << ' ';
+        }
+        wto << wpo.get_node(v);
+      }
+      if (first) {
+        first = false;
+      }
+    }
+    EXPECT_EQ(wto.str(), "1 12 16 18 92 26 93 (45 (46 47 (73) 74) 75)");
+  }
+  {
+    SimpleGraph2 g;
+    g.add_edge("1", "2");
+    g.add_edge("2", "3");
+    g.add_edge("3", "4");
+    g.add_edge("4", "5");
+    g.add_edge("5", "6");
+    g.add_edge("6", "7");
+    g.add_edge("6", "2");
+    g.add_edge("5", "3");
+    g.add_edge("1", "8");
+    g.add_edge("8", "4");
+
+    WeakPartialOrdering<std::string> wpo(
+        "1", [&g](const std::string& n) { return g.successors(n); }, false);
+
+    EXPECT_EQ(10, wpo.size());
+
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
+    Answer lst[] = {
+        {"1", true, false, false, 2, 0, 0, false},
+        {"2", false, true, false, 1, 1, 0, false},
+        {"3", false, true, false, 1, 1, 0, true},
+        {"8", true, false, false, 1, 1, 0, false},
+        {"4", true, false, false, 1, 2, 0, false},
+        {"5", true, false, false, 1, 1, 0, false},
+        {"3", false, false, true, 1, 1, 2, false},
+        {"6", true, false, false, 1, 1, 0, false},
+        {"2", false, false, true, 1, 1, 2, false},
+        {"7", true, false, false, 0, 1, 0, false},
+    };
+
+    std::unordered_map<WpoIdx, uint32_t> count(wpo.size());
+    std::stack<WpoIdx> wl;
+    wl.push(wpo.get_entry());
+    int i = 0;
+    std::ostringstream wto;
+    bool first = true;
+    while (!wl.empty()) {
+      auto v = wl.top();
+      wl.pop();
+      for (auto w : wpo.get_successors(v)) {
+        count[w]++;
+        if (count[w] == wpo.get_num_preds(w)) {
+          wl.push(w);
+        }
+      }
+
+      auto& answer = lst[i++];
+      EXPECT_EQ(answer.node, wpo.get_node(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.plain, wpo.is_plain(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.head, wpo.is_head(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.exit, wpo.is_exit(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.num_succs, wpo.get_successors(v).size())
+          << wpo.get_node(v);
+      EXPECT_EQ(answer.num_preds, wpo.get_num_preds(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.widen, wpo.is_widening_point(v)) << wpo.get_node(v);
+      if (wpo.is_head(v)) {
+        EXPECT_EQ(wpo.get_node(wpo.get_exit_of_head(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        if (!first) {
+          wto << ' ';
+        }
+        wto << '(' << wpo.get_node(v);
+      } else if (wpo.is_exit(v)) {
+        EXPECT_EQ(answer.num_outer_preds, wpo.get_num_outer_preds(v).size())
+            << wpo.get_node(v);
+        EXPECT_EQ(wpo.get_node(wpo.get_head_of_exit(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        wto << ')';
+      } else {
+        if (!first) {
+          wto << ' ';
+        }
+        wto << wpo.get_node(v);
+      }
+      if (first) {
+        first = false;
+      }
+    }
+    EXPECT_EQ(wto.str(), "1 (2 (3 8 4 5) 6) 7");
+  }
+  {
+    SimpleGraph2 g;
+    g.add_edge("1", "2");
+    g.add_edge("2", "3");
+    g.add_edge("3", "4");
+    g.add_edge("4", "5");
+    g.add_edge("5", "6");
+    g.add_edge("6", "7");
+    g.add_edge("6", "2");
+    g.add_edge("5", "3");
+    g.add_edge("1", "8");
+    g.add_edge("8", "3");
+
+    WeakPartialOrdering<std::string> wpo(
+        "1", [&g](const std::string& n) { return g.successors(n); }, false);
+
+    EXPECT_EQ(10, wpo.size());
+
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
+    Answer lst[] = {
+        {"1", true, false, false, 2, 0, 0, false},
+        {"2", false, true, false, 1, 1, 0, false},
+        {"8", true, false, false, 1, 1, 0, false},
+        {"3", false, true, false, 1, 2, 0, true},
+        {"4", true, false, false, 1, 1, 0, false},
+        {"5", true, false, false, 1, 1, 0, false},
+        {"3", false, false, true, 1, 1, 1, false},
+        {"6", true, false, false, 1, 1, 0, false},
+        {"2", false, false, true, 1, 1, 2, false},
+        {"7", true, false, false, 0, 1, 0, false},
+    };
+
+    std::unordered_map<WpoIdx, uint32_t> count(wpo.size());
+    std::stack<WpoIdx> wl;
+    wl.push(wpo.get_entry());
+    int i = 0;
+    std::ostringstream wto;
+    bool first = true;
+    while (!wl.empty()) {
+      auto v = wl.top();
+      wl.pop();
+      for (auto w : wpo.get_successors(v)) {
+        count[w]++;
+        if (count[w] == wpo.get_num_preds(w)) {
+          wl.push(w);
+        }
+      }
+
+      auto& answer = lst[i++];
+      EXPECT_EQ(answer.node, wpo.get_node(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.plain, wpo.is_plain(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.head, wpo.is_head(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.exit, wpo.is_exit(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.num_succs, wpo.get_successors(v).size())
+          << wpo.get_node(v);
+      EXPECT_EQ(answer.num_preds, wpo.get_num_preds(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.widen, wpo.is_widening_point(v)) << wpo.get_node(v);
+      if (wpo.is_head(v)) {
+        EXPECT_EQ(wpo.get_node(wpo.get_exit_of_head(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        if (!first) {
+          wto << ' ';
+        }
+        wto << '(' << wpo.get_node(v);
+      } else if (wpo.is_exit(v)) {
+        EXPECT_EQ(answer.num_outer_preds, wpo.get_num_outer_preds(v).size())
+            << wpo.get_node(v);
+        EXPECT_EQ(wpo.get_node(wpo.get_head_of_exit(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        wto << ')';
+      } else {
+        if (!first) {
+          wto << ' ';
+        }
+        wto << wpo.get_node(v);
+      }
+      if (first) {
+        first = false;
+      }
+    }
+    EXPECT_EQ(wto.str(), "1 (2 8 (3 4 5) 6) 7");
+  }
+  {
+    SimpleGraph2 g;
+    g.add_edge("1", "2");
+    g.add_edge("2", "3");
+    g.add_edge("3", "4");
+    g.add_edge("4", "5");
+    g.add_edge("5", "6");
+    g.add_edge("6", "7");
+    g.add_edge("6", "2");
+    g.add_edge("5", "3");
+    g.add_edge("1", "8");
+    g.add_edge("8", "4");
+    g.add_edge("7", "1");
+
+    WeakPartialOrdering<std::string> wpo(
+        "1", [&g](const std::string& n) { return g.successors(n); }, false);
+
+    EXPECT_EQ(11, wpo.size());
+
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
+    Answer lst[] = {
+        {"1", false, true, false, 2, 0, 0, false},
+        {"2", false, true, false, 1, 1, 0, false},
+        {"3", false, true, false, 1, 1, 0, true},
+        {"8", true, false, false, 1, 1, 0, false},
+        {"4", true, false, false, 1, 2, 0, false},
+        {"5", true, false, false, 1, 1, 0, false},
+        {"3", false, false, true, 1, 1, 2, false},
+        {"6", true, false, false, 1, 1, 0, false},
+        {"2", false, false, true, 1, 1, 2, false},
+        {"7", true, false, false, 1, 1, 0, false},
+        {"1", false, false, true, 0, 1, 0, false},
+    };
+
+    std::unordered_map<WpoIdx, uint32_t> count(wpo.size());
+    std::stack<WpoIdx> wl;
+    wl.push(wpo.get_entry());
+    int i = 0;
+    std::ostringstream wto;
+    bool first = true;
+    while (!wl.empty()) {
+      auto v = wl.top();
+      wl.pop();
+      for (auto w : wpo.get_successors(v)) {
+        count[w]++;
+        if (count[w] == wpo.get_num_preds(w)) {
+          wl.push(w);
+        }
+      }
+
+      auto& answer = lst[i++];
+      EXPECT_EQ(answer.node, wpo.get_node(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.plain, wpo.is_plain(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.head, wpo.is_head(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.exit, wpo.is_exit(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.num_succs, wpo.get_successors(v).size())
+          << wpo.get_node(v);
+      EXPECT_EQ(answer.num_preds, wpo.get_num_preds(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.widen, wpo.is_widening_point(v)) << wpo.get_node(v);
+      if (wpo.is_head(v)) {
+        EXPECT_EQ(wpo.get_node(wpo.get_exit_of_head(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        if (!first) {
+          wto << ' ';
+        }
+        wto << '(' << wpo.get_node(v);
+      } else if (wpo.is_exit(v)) {
+        EXPECT_EQ(answer.num_outer_preds, wpo.get_num_outer_preds(v).size())
+            << wpo.get_node(v);
+        EXPECT_EQ(wpo.get_node(wpo.get_head_of_exit(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        wto << ')';
+      } else {
+        if (!first) {
+          wto << ' ';
+        }
+        wto << wpo.get_node(v);
+      }
+      if (first) {
+        first = false;
+      }
+    }
+    EXPECT_EQ(wto.str(), "(1 (2 (3 8 4 5) 6) 7)");
+  }
+  {
+    SimpleGraph2 g;
+    g.add_edge("0", "1");
+    g.add_edge("1", "2");
+    g.add_edge("2", "3");
+    g.add_edge("3", "4");
+    g.add_edge("4", "5");
+    g.add_edge("5", "6");
+    g.add_edge("6", "7");
+    g.add_edge("6", "2");
+    g.add_edge("5", "3");
+    g.add_edge("1", "8");
+    g.add_edge("8", "4");
+    g.add_edge("7", "1");
+    g.add_edge("7", "9");
+
+    WeakPartialOrdering<std::string> wpo(
+        "0", [&g](const std::string& n) { return g.successors(n); }, false);
+
+    EXPECT_EQ(13, wpo.size());
+
+    // node, plain, head, exit, num_succs, num_preds, num_outer_preds, widen
+    Answer lst[] = {
+        {"0", true, false, false, 1, 0, 0, false},
+        {"1", false, true, false, 2, 1, 0, false},
+        {"2", false, true, false, 1, 1, 0, false},
+        {"3", false, true, false, 1, 1, 0, true},
+        {"8", true, false, false, 1, 1, 0, false},
+        {"4", true, false, false, 1, 2, 0, false},
+        {"5", true, false, false, 1, 1, 0, false},
+        {"3", false, false, true, 1, 1, 2, false},
+        {"6", true, false, false, 1, 1, 0, false},
+        {"2", false, false, true, 1, 1, 2, false},
+        {"7", true, false, false, 1, 1, 0, false},
+        {"1", false, false, true, 1, 1, 1, false},
+        {"9", true, false, false, 0, 1, 0, false},
+    };
+
+    std::unordered_map<WpoIdx, uint32_t> count(wpo.size());
+    std::stack<WpoIdx> wl;
+    wl.push(wpo.get_entry());
+    int i = 0;
+    std::ostringstream wto;
+    bool first = true;
+    while (!wl.empty()) {
+      auto v = wl.top();
+      wl.pop();
+      for (auto w : wpo.get_successors(v)) {
+        count[w]++;
+        if (count[w] == wpo.get_num_preds(w)) {
+          wl.push(w);
+        }
+      }
+
+      auto& answer = lst[i++];
+      EXPECT_EQ(answer.node, wpo.get_node(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.plain, wpo.is_plain(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.head, wpo.is_head(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.exit, wpo.is_exit(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.num_succs, wpo.get_successors(v).size())
+          << wpo.get_node(v);
+      EXPECT_EQ(answer.num_preds, wpo.get_num_preds(v)) << wpo.get_node(v);
+      EXPECT_EQ(answer.widen, wpo.is_widening_point(v)) << wpo.get_node(v);
+      if (wpo.is_head(v)) {
+        EXPECT_EQ(wpo.get_node(wpo.get_exit_of_head(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        if (!first) {
+          wto << ' ';
+        }
+        wto << '(' << wpo.get_node(v);
+      } else if (wpo.is_exit(v)) {
+        EXPECT_EQ(answer.num_outer_preds, wpo.get_num_outer_preds(v).size())
+            << wpo.get_node(v);
+        EXPECT_EQ(wpo.get_node(wpo.get_head_of_exit(v)), wpo.get_node(v))
+            << wpo.get_node(v);
+        wto << ')';
+      } else {
+        if (!first) { wto << ' ';
+        }
+        wto << wpo.get_node(v);
+      }
+      if (first) {
+        first = false;
+      }
+    }
+    EXPECT_EQ(wto.str(), "0 (1 (2 (3 8 4 5) 6) 7) 9");
   }
 }
