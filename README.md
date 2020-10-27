@@ -67,7 +67,7 @@ We also provide a quick setup using cmake that builds all the tests:
 mkdir build-cmake
 cd build-cmake
 # .. is the root source directory of SPARTA
-cmake ..
+cmake .. -G "Unix Makefiles"
 cmake --build .
 ```
 
