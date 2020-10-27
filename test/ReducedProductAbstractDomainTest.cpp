@@ -17,6 +17,8 @@
 
 using namespace sparta;
 
+namespace {
+
 enum Elements0 { BOT0, TOP0 };
 enum Elements1 { BOT1, A, B, TOP1 };
 enum Elements2 { BOT2, C, D, E, F, TOP2 };
@@ -78,9 +80,7 @@ class D0xD1xD2 final
   }
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(ReducedProductAbstractDomain,
-                              AbstractDomainPropertyTest,
-                              D0xD1xD2);
+} // namespace
 
 template <>
 std::vector<D0xD1xD2>
@@ -89,6 +89,23 @@ AbstractDomainPropertyTest<D0xD1xD2>::non_extremal_values() {
   D0xD1xD2 tbe(make_tuple(D0(TOP0), D1(B), D2(E)));
   return {tad, tbe};
 }
+
+class D0xPartition final
+    : public ReducedProductAbstractDomain<D0xPartition,
+                                          D0,
+                                          HashedAbstractPartition<int, D1>> {
+ public:
+  // Inherit constructors from ReducedProductAbstractDomain.
+  using ReducedProductAbstractDomain::ReducedProductAbstractDomain;
+
+  static void reduce_product(
+      std::tuple<D0, HashedAbstractPartition<int, D1>>& product) {}
+};
+
+
+INSTANTIATE_TYPED_TEST_CASE_P(ReducedProductAbstractDomain,
+                              AbstractDomainPropertyTest,
+                              D0xD1xD2);
 
 TEST(ReducedProductAbstractDomainTest, latticeOperations) {
   D0xD1xD2 top = D0xD1xD2::top();
@@ -137,18 +154,6 @@ TEST(ReducedProductAbstractDomainTest, latticeOperations) {
   D0xD1xD2 tac_reduced(make_tuple(D0(BOT0), D1(A), D2(C)));
   EXPECT_TRUE(tac_reduced.is_bottom());
 }
-
-class D0xPartition final
-    : public ReducedProductAbstractDomain<D0xPartition,
-                                          D0,
-                                          HashedAbstractPartition<int, D1>> {
- public:
-  // Inherit constructors from ReducedProductAbstractDomain.
-  using ReducedProductAbstractDomain::ReducedProductAbstractDomain;
-
-  static void reduce_product(
-      std::tuple<D0, HashedAbstractPartition<int, D1>>& product) {}
-};
 
 TEST(ReducedProductAbstractDomainTest, normalizedConstruction) {
   D0xPartition product;

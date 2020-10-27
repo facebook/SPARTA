@@ -17,6 +17,8 @@
 
 using namespace sparta;
 
+namespace {
+
 enum Elements0 { BOT0, TOP0 };
 enum Elements1 { BOT1, A, B, TOP1 };
 enum Elements2 { BOT2, C, D, E, F, TOP2 };
@@ -70,9 +72,7 @@ class D0xD1xD2 final
   using DirectProductAbstractDomain::DirectProductAbstractDomain;
 };
 
-INSTANTIATE_TYPED_TEST_CASE_P(DirectProductAbstractDomain,
-                              AbstractDomainPropertyTest,
-                              D0xD1xD2);
+} // namespace
 
 template <>
 std::vector<D0xD1xD2>
@@ -81,6 +81,10 @@ AbstractDomainPropertyTest<D0xD1xD2>::non_extremal_values() {
   D0xD1xD2 tbe(make_tuple(D0(TOP0), D1(B), D2(E)));
   return {tad, tbe};
 }
+
+INSTANTIATE_TYPED_TEST_CASE_P(DirectProductAbstractDomain,
+                              AbstractDomainPropertyTest,
+                              D0xD1xD2);
 
 TEST(DirectProductAbstractDomainTest, latticeOperations) {
   D0xD1xD2 top = D0xD1xD2::top();
