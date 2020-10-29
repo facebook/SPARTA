@@ -680,6 +680,8 @@ void test1() {
   EXPECT_TRUE(inter.registry.get(&fun6).is_top());
   // 7 is unreached
   EXPECT_TRUE(inter.registry.get(&fun7).is_top());
+
+  FAIL();
 }
 
 TEST(AnalyzerTest, test1) { test1(); }
