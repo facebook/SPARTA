@@ -15,6 +15,7 @@ commands:
       - run:
           name: Setup
           command: |
+            sudo apt update
             sudo apt install -y --no-install-recommends g++ cmake libboost-all-dev
 
   build-tests-with-cmake:
