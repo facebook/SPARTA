@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -177,12 +178,11 @@ where
                 Self::extrapolate(&context, head, current_state, new_state);
                 context.increase_iteration_count_for(head);
                 for (&component_idx, &num) in self.wpo.get_num_outer_preds(wpo_idx) {
-                    if component_idx != entry_idx {
-                        let old_counter =
-                            wpo_counter[component_idx as usize].fetch_add(num, Ordering::Relaxed);
-                        if old_counter + num == self.wpo.get_num_preds(component_idx) {
-                            worklist.push_back(component_idx);
-                        }
+                    assert!(component_idx != entry_idx);
+                    let old_counter =
+                        wpo_counter[component_idx as usize].fetch_add(num, Ordering::Relaxed);
+                    if old_counter + num == self.wpo.get_num_preds(component_idx) {
+                        worklist.push_back(component_idx);
                     }
                 }
 
@@ -219,15 +219,19 @@ where
         }
     }
 
-    fn get_state_at_or_bottom(states: &HashMap<G::NodeId, D>, n: G::NodeId) -> D {
-        states.get(&n).cloned().unwrap_or_else(D::bottom)
+    fn get_state_at_or_bottom(states: &HashMap<G::NodeId, D>, n: G::NodeId) -> Cow<'_, D> {
+        if let Some(state) = states.get(&n) {
+            Cow::Borrowed(state)
+        } else {
+            Cow::Owned(D::bottom())
+        }
     }
 
-    pub fn get_entry_state_at(&self, n: G::NodeId) -> D {
+    pub fn get_entry_state_at(&self, n: G::NodeId) -> Cow<'_, D> {
         Self::get_state_at_or_bottom(&self.entry_states, n)
     }
 
-    pub fn get_exit_state_at(&self, n: G::NodeId) -> D {
+    pub fn get_exit_state_at(&self, n: G::NodeId) -> Cow<'_, D> {
         Self::get_state_at_or_bottom(&self.exit_states, n)
     }
 

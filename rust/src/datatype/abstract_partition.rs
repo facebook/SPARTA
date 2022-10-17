@@ -6,8 +6,9 @@
  */
 
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::hash::Hash;
+
+use im::HashMap;
 
 use crate::datatype::bitvec::BitVec;
 use crate::datatype::AbstractDomain;
@@ -237,7 +238,6 @@ where
             (_, Top) => {}
             (Value(l_map), Value(mut r_map)) => {
                 l_map.retain(|l_k, _| r_map.contains_key(l_k));
-
                 for (l_k, l_v) in l_map.iter_mut() {
                     let r_v = r_map.remove(l_k).unwrap();
                     operation(l_v, r_v);
