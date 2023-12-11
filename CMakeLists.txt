@@ -46,10 +46,25 @@ install(TARGETS sparta EXPORT sparta_target
 )
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-install(EXPORT sparta_target DESTINATION cmake)
+install(EXPORT sparta_target
+  FILE sparta_target.cmake
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sparta"
+)
 
 # This makes the project importable from the build directory
 export(TARGETS sparta FILE sparta_target.cmake)
+
+# Generate CMake config file that can be used in other projects
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/sparta-config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/sparta-config.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sparta"
+)
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/sparta-config.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sparta"
+)
 
 ###################################################
 # test
