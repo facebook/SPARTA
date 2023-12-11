@@ -167,6 +167,9 @@ class SmallSortedSetAbstractDomain final
       return this->get_value()->contains(e);
     }
     }
+    SPARTA_ASSERT(false && "unknown AbstractValueKind");
+    // Return false to suppress -Wreturn-type warning reported by gcc
+    return false;
   }
 
   friend std::ostream& operator<<(std::ostream& out,

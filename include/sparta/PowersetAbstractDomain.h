@@ -14,6 +14,7 @@
 #include <type_traits>
 
 #include <sparta/AbstractDomain.h>
+#include <sparta/Exceptions.h>
 
 namespace sparta {
 namespace pad_impl {
@@ -235,6 +236,9 @@ class PowersetAbstractDomain
       return this->get_value()->contains(e);
     }
     }
+    SPARTA_ASSERT(false && "unknown AbstractValueKind");
+    // Return false to suppress -Wreturn-type warning reported by gcc
+    return false;
   }
 
   friend std::ostream& operator<<(std::ostream& o, const Derived& s) {
