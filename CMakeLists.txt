@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project("sparta")
 
 include(CTest)
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 include(Commons)
 
 if (NOT CMAKE_BUILD_TYPE)
