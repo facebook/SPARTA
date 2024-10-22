@@ -12,7 +12,7 @@ use sparta::datatype::DisjointUnion;
 use sparta::datatype::HashSetAbstractDomain;
 
 #[allow(dead_code)]
-#[derive(Clone, DisjointUnion, PartialEq, Eq)]
+#[derive(Clone, DisjointUnion, PartialEq, Eq, Debug)]
 enum MyUnionedDomain {
     FirstCase(HashSetAbstractDomain<i32>),
     SecondCase(HashSetAbstractDomain<i64>),
@@ -118,6 +118,20 @@ fn test_meet_diff_arm() {
     let met_mudom = mudom1.meet(mudom2);
 
     assert!(met_mudom.is_bottom());
+}
+
+#[test]
+fn test_bottom_is_identity_element_of_join_operation() {
+    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
+    let mudom = MyUnionedDomain::SecondCase(hsdom);
+    assert_eq!(mudom.clone().join(AbstractDomain::bottom()), mudom.clone());
+}
+
+#[test]
+fn test_top_is_identity_element_of_meet_operation() {
+    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
+    let mudom = MyUnionedDomain::SecondCase(hsdom);
+    assert_eq!(mudom.clone().meet(AbstractDomain::top()), mudom.clone());
 }
 
 #[allow(dead_code)]
