@@ -85,28 +85,18 @@ pub fn derive_disjoint_union(input: TokenStream) -> TokenStream {
             }
 
             fn join_with(&mut self, rhs: Self) {
-                if self.is_bottom() {
-                    *self = rhs;
-                    return;
-                }
-                if rhs.is_bottom() {
-                    return;
-                }
                 match (self, rhs) {
+                    (_, r) if r.is_bottom() => {/*do nothing because bottom is the identity element of join*/},
+                    (s, r) if s.is_bottom() => *s = r,
                     #( (#enum_name::#variant_idents(ref mut ldom), #enum_name::#variant_idents(rdom)) => ldom.join_with(rdom), )*
                     (s, _) => *s = Self::top(),
                 }
             }
 
             fn meet_with(&mut self, rhs: Self) {
-                if self.is_top() {
-                    *self = rhs;
-                    return;
-                }
-                if rhs.is_top() {
-                    return;
-                }
                 match (self, rhs) {
+                    (_, r) if r.is_top() => {/*do nothing because top is the identity element of meet*/},
+                    (s, r) if s.is_top() => *s = r,
                     #( (#enum_name::#variant_idents(ref mut ldom), #enum_name::#variant_idents(rdom)) => ldom.meet_with(rdom), )*
                     (s, _) => *s = Self::bottom(),
                 }

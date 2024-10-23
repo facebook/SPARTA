@@ -122,34 +122,26 @@ fn test_meet_diff_arm() {
 
 #[test]
 fn test_bottom_is_right_identity_of_join() {
-    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
-    let mudom = MyUnionedDomain::SecondCase(hsdom);
-    let bottom = MyUnionedDomain::bottom();
-    assert_eq!(mudom.clone().join(bottom), mudom.clone());
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(mudom.clone().join(MyUnionedDomain::bottom()), mudom.clone());
 }
 
 #[test]
 fn test_bottom_is_left_identity_of_join() {
-    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
-    let mudom = MyUnionedDomain::SecondCase(hsdom);
-    let bottom = MyUnionedDomain::bottom();
-    assert_eq!(bottom.clone().join(mudom), bottom.clone());
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(MyUnionedDomain::bottom().join(mudom.clone()), mudom);
 }
 
 #[test]
 fn test_top_is_right_identity_of_meet() {
-    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
-    let mudom = MyUnionedDomain::SecondCase(hsdom);
-    let top = MyUnionedDomain::top();
-    assert_eq!(mudom.clone().meet(top), mudom.clone());
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(mudom.clone().meet(MyUnionedDomain::top()), mudom.clone());
 }
 
 #[test]
 fn test_top_is_left_identity_of_meet() {
-    let hsdom: HashSetAbstractDomain<_> = [1, 2].into_iter().collect();
-    let mudom = MyUnionedDomain::SecondCase(hsdom);
-    let top = MyUnionedDomain::top();
-    assert_eq!(top.clone().meet(mudom), top.clone());
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(MyUnionedDomain::top().meet(mudom.clone()), mudom);
 }
 
 #[allow(dead_code)]
