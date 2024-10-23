@@ -11,7 +11,8 @@ use sparta::datatype::AbstractDomain;
 use sparta::datatype::DisjointUnion;
 use sparta::datatype::HashSetAbstractDomain;
 
-#[derive(Clone, DisjointUnion, PartialEq, Eq)]
+#[allow(dead_code)]
+#[derive(Clone, DisjointUnion, PartialEq, Eq, Debug)]
 enum MyUnionedDomain {
     FirstCase(HashSetAbstractDomain<i32>),
     SecondCase(HashSetAbstractDomain<i64>),
@@ -119,6 +120,31 @@ fn test_meet_diff_arm() {
     assert!(met_mudom.is_bottom());
 }
 
+#[test]
+fn test_bottom_is_right_identity_of_join() {
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(mudom.clone().join(MyUnionedDomain::bottom()), mudom.clone());
+}
+
+#[test]
+fn test_bottom_is_left_identity_of_join() {
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(MyUnionedDomain::bottom().join(mudom.clone()), mudom);
+}
+
+#[test]
+fn test_top_is_right_identity_of_meet() {
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(mudom.clone().meet(MyUnionedDomain::top()), mudom.clone());
+}
+
+#[test]
+fn test_top_is_left_identity_of_meet() {
+    let mudom = MyUnionedDomain::SecondCase([1].into_iter().collect());
+    assert_eq!(MyUnionedDomain::top().meet(mudom.clone()), mudom);
+}
+
+#[allow(dead_code)]
 #[derive(Clone, DisjointUnion, PartialEq, Eq)]
 enum TestGenericsDeriveTypechecks<S, T>
 where
@@ -129,6 +155,7 @@ where
     SecondCase(HashSetAbstractDomain<T>),
 }
 
+#[allow(dead_code)]
 #[derive(Clone, DisjointUnion, PartialEq, Eq)]
 enum TestGenericsDeriveForWholeDomainTypechecks<S: AbstractDomain, T>
 where
